@@ -1,0 +1,13 @@
+{
+    "name": "trych/kirby-field-composer",
+    "description": "Field methods to help composing more complex strings from conteent fields",
+    "version": "1.0.0",
+    "license": "MIT",
+    "type": "kirby-plugin",
+    "authors": [
+        {
+            "name": "Timo Rychert",
+            "email": "mail@trych.dev"
+        }
+    ],
+}
