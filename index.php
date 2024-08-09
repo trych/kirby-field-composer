@@ -3,9 +3,7 @@
 
 use trych\FieldComposer\FieldMethods;
 
-F::loadClasses([
-  'trych\\FieldComposer\\FieldMethods' => 'classes/FieldMethods.php'
-], __DIR__);
+@include_once __DIR__ . '/vendor/autoload.php';
 
 Kirby::plugin(
   name: 'trych/field-methods',

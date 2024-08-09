@@ -1,6 +1,6 @@
 {
     "name": "trych/kirby-field-composer",
-    "description": "Field methods to help composing more complex strings from conteent fields",
+    "description": "Kirby field methods to help composing more complex strings from content fields",
     "version": "1.0.0",
     "license": "MIT",
     "type": "kirby-plugin",
@@ -10,4 +10,21 @@
             "email": "mail@trych.dev"
         }
     ],
+    "require": {
+        "getkirby/composer-installer": "^1.1"
+    },
+    "extra": {
+        "installer-name": "field-composer"
+    },
+    "autoload": {
+        "psr-4": {
+            "trych\\FieldComposer\\": "classes/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "getkirby/composer-installer": true
+        }
+    }
 }
