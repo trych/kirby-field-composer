@@ -10,6 +10,7 @@ Kirby::plugin(
   extends: [
     'fieldMethods' => [
       'merge'  => [FieldMethods::class, 'merge'],
+      'format'  => [FieldMethods::class, 'format'],
       'prefix' => [FieldMethods::class, 'prefix'],
       'suffix' => [FieldMethods::class, 'suffix'],
       'when' => [FieldMethods::class, 'when'],
