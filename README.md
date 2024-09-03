@@ -41,8 +41,8 @@ field(
   [
     $artwork->artist()->or('Unknown'),
     field($artwork->born(), $artwork->died(), '-')
-    ->prefix(field('*')->whenNot($artwork->died())),
-  $artwork->artistorigin()
+      ->prefix(field('*')->whenNot($artwork->died())),
+    $artwork->artistorigin()
   ],
   [
     $artwork->title()->or('Untitled'),
@@ -345,7 +345,7 @@ Alias for `notWhenAny()`. Returns the field if none of the conditions are valid.
 
 Applies a custom formatting function to the field's value.
 
-This is very similar to [Kirby’s native ￼`$field->callback\(\)`￼ method](https://getkirby.com/docs/reference/templates/field-methods/callback), except that for convenience the field’s value is used as the first parameter of the callback function (with the field itself being the second one) and only a string needs to be returned, the re-wrapping into a field happens automatically. Returning the field with the new value directly will also work, though.
+This is very similar to [Kirby’s native $field->callback\(\) method](https://getkirby.com/docs/reference/templates/field-methods/callback), except that for convenience the field’s value is used as the first parameter of the callback function (with the field itself being the second one) and only a string needs to be returned, the re-wrapping into a field happens automatically. Returning the field with the new value directly will also work, though.
 
 - **`$callback`:** A closure that takes the field's value and the field object as arguments, and returns the new formatted value. The value will be automatically wrapped in a field again.
 
@@ -359,7 +359,7 @@ $page->description()->format(function($value) {
 
 ### `$field->str($method, ...$args)`
 
-Applies a [Kirby ￼￼`Str`￼￼ class method](https://getkirby.com/docs/reference/objects/toolkit/str) to the field's value.
+Applies a [Kirby Str class method](https://getkirby.com/docs/reference/objects/toolkit/str) to the field's value.
 
 - **`$method`:** The name of the `Str` class method to apply.
 - **`$args`:** Additional arguments to pass to the Str method.
