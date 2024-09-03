@@ -4,6 +4,7 @@
     "version": "1.0.0",
     "license": "MIT",
     "type": "kirby-plugin",
+    "homepage": "https://github.com/trych/kirby-field-composer",
     "authors": [
         {
             "name": "Timo Rychert",
@@ -11,6 +12,11 @@
             "homepage": "https://trych.dev"
         }
     ],
+    "support": {
+      "issues": "https://github.com/trych/kirby-field-composer/issues",
+      "source": "https://github.com/trych/kirby-field-composer",
+      "docs": "https://github.com/trych/kirby-field-composer"
+    },
     "require": {
         "getkirby/composer-installer": "^1.1"
     },
@@ -27,5 +33,19 @@
         "allow-plugins": {
             "getkirby/composer-installer": true
         }
-    }
+    },
+    "keywords": [
+      "php",
+      "plugin",
+      "kirby",
+      "kirby-cms",
+      "kirby-plugin",
+      "field",
+      "field-methods",
+      "method-chaining",
+      "templating",
+      "strings",
+      "content-fields",
+      "helper-functions"
+    ]
 }
