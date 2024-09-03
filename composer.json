@@ -1,13 +1,14 @@
 {
     "name": "trych/kirby-field-composer",
-    "description": "Kirby field methods to help composing more complex strings from content fields",
+    "description": "Kirby plugin providing methods to intelligently handle field values to compose complex strings.",
     "version": "1.0.0",
     "license": "MIT",
     "type": "kirby-plugin",
     "authors": [
         {
             "name": "Timo Rychert",
-            "email": "mail@trych.dev"
+            "email": "mail@trych.dev",
+            "homepage": "https://trych.dev"
         }
     ],
     "require": {

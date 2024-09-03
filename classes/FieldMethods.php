@@ -3,11 +3,11 @@
 
 namespace trych\FieldComposer;
 
+use Closure;
 use Kirby\Content\Field;
 use Kirby\Toolkit\Str;
 use Kirby\Toolkit\Html;
 use Kirby\Exception\InvalidArgumentException;
-use Closure;
 
 class FieldMethods
 {
@@ -21,33 +21,21 @@ class FieldMethods
    * - Controlling the position of the current field in the merged result
    * - Optionally excluding the current field from the merge
    *
+   * Note: Empty fields are automatically excluded from the merge.
+   *
    * @param Field|string|int|bool ...$args Variable arguments which can include:
    *        - Field objects or scalar values to merge
-   *        - A string separator (if provided, must be the second-to-last argument)
+   *        - A string separator (if provided, must be either the last argument or the
+   *          second-to-last argument if a position is provided as the last argument (see below))
    *        - An integer position or boolean flag (if provided, must be the last argument)
    *          - Integer: Specifies the position to insert the current field (0-based index)
    *          - Boolean false: Excludes the current field from the merge
    *
    * @return Field The field with the merged value
-   *
-   * @example
-   * // Merge fields with a separator
-   * merge($field, $field2, $field3, ', ')
-   *
-   * // Merge fields and insert current field at position 1
-   * merge($field, $field2, $field3, 1)
-   *
-   * // Merge fields with a separator, excluding the current field
-   * merge($field, $field2, $field3, ', ', false)
-   *
-   * // Merge fields with a separator, inserting current field at position -1 (second to last)
-   * merge($field, $field2, $field3, ', ', -1)
-   *
-   * Note: Empty fields (with value '' or []) are automatically excluded from the merge.
    */
-  public static function merge(Field $field, Field|string|int|bool ...$args): Field
+  public static function merge(Field $field, Field|string|int|bool|array ...$args): Field
   {
-    $separator = '';
+    $separator = self::getDefaultSeparator();
     $position = 0; // Default position (beginning of the array)
     $includeCurrentField = true;
     $fields = $args;
@@ -70,10 +58,16 @@ class FieldMethods
     }
 
     // Filter and map Field arguments to their values
-    // empty fields ('' as value) are removed
+    // empty fields are removed
     $fieldValues = array_values(array_filter(
       array_map(
-        fn($arg) => $arg instanceof Field ? $arg->value() : null,
+        function($arg) use ($separator) {
+          if (is_array($arg)) {
+            // Recursive call to merge for arrays
+            return FieldComposer::compose(...$arg);
+          }
+          return $arg instanceof Field ? $arg->value() : $arg;
+        },
         $fields
       ),
       fn($value) => $value !== null && $value !== '' && $value !== []
@@ -115,8 +109,9 @@ class FieldMethods
    *
    * @return Field The modified field
    */
-  public static function prefix(Field $field, Field|string $prefix = '', ?string $separator = ''): Field
+  public static function prefix(Field $field, Field|string $prefix = '', ?string $separator = null): Field
   {
+    $separator = $separator ?? self::getDefaultSeparator();
     return self::addAffix($field, $prefix, $separator, true);
   }
 
@@ -128,8 +123,9 @@ class FieldMethods
    *
    * @return Field The modified field
    */
-  public static function suffix(Field $field, Field|string $suffix = '', ?string $separator = ''): Field
+  public static function suffix(Field $field, Field|string $suffix = '', ?string $separator = null): Field
   {
+    $separator = $separator ?? self::getDefaultSeparator();
     return self::addAffix($field, $suffix, $separator, false);
   }
 
@@ -230,20 +226,27 @@ class FieldMethods
   }
 
   /**
-   * Wraps the field's value with specified strings.
+   * Wraps the field's value with specified strings or field values. If the field is empty, no wrapping strings will be added.
    *
-   * @param string $before The string to prepend to the field's value
-   * @param string|null $after The string to append to the field's value. If null, $before is used
+   * @param Field|string $before The string or field to prepend to the field's value
+   * @param Field|string|null $after The string or field to append to the field's value. If null, $before is used
+   * @param string|null $separator An optional separator between the field value and $before and $after
    *
-   * @return Field The modified field with wrapped value
+   * @return Field The modified field with wrapped value, or the original field if it's empty
    */
-  public static function wrap(Field $field, string $before, ?string $after = null): Field
+  public static function wrap(Field $field, Field|string $before, Field|string|null $after = null, ?string $separator = null): Field
   {
-    return $field->value(Str::wrap($field, $before, $after));
+    if ($field->isEmpty()) return $field;
+
+    $separator = $separator ?? self::getDefaultSeparator();
+    $after = $after ?? $before;
+
+    $prefixedField = self::addAffix($field, $before, $separator, true);
+    return self::addAffix($prefixedField, $after, $separator, false);
   }
 
   /**
-   * Wraps the field's value in an HTML tag.
+   * Wraps the field's value in an HTML tag. If the field is empty, no tags are added.
    *
    * @param string $tag The HTML tag to wrap the field's value in
    * @param array $attr An associative array of HTML attributes for the tag
@@ -254,6 +257,8 @@ class FieldMethods
    */
   public static function tag(Field $field, string $tag, array $attr = [], ?string $indent = null, int $level = 0): Field
   {
+    if ($field->isEmpty()) return $field;
+
     return $field->value(
       Html::tag($tag, $field->value(), $attr, $indent, $level)
     );
@@ -281,7 +286,10 @@ class FieldMethods
   }
 
   /**
-   * Applies a Str class method to the field's value.
+   * Applies a Kirby Str class method to the field's value.
+   *
+   * This method allows you to use any of Kirby's Str:: utility methods directly on a field.
+   * It provides a convenient way to perform string operations that are not covered by existing field methods.
    *
    * @param string $method The name of the Str class method to apply
    * @param mixed ...$args Additional arguments to pass to the Str method
@@ -289,6 +297,15 @@ class FieldMethods
    * @return Field The modified field with the Str method applied to its value
    *
    * @throws InvalidArgumentException If the specified method does not exist in the Str class
+   *
+   * @example
+   * // Convert the field value to camel case
+   * $field->str('camel');
+   *
+   * // Adds -1 to the field's value or increment the ending number to allow -2, -3, etc.
+   * $field->str('increment');
+   *
+   * @link https://getkirby.com/docs/reference/objects/toolkit/str Kirby Str method overview
    */
   public static function str(Field $field, string $method, ...$args): Field
   {
@@ -316,6 +333,12 @@ class FieldMethods
     if ($field->isEmpty()) return $field;
 
     $affixValue = $affix instanceof Field ? $affix->value() : $affix;
+
+    // return original field if affix is empty to not insert an extra separator
+    if (empty($affixValue)) {
+      return $field;
+    }
+
     $mergedValue = $isPrefix
       ? $affixValue . $separator . $field->value()
       : $field->value() . $separator . $affixValue;
@@ -323,11 +346,9 @@ class FieldMethods
     return $field->value($mergedValue);
   }
 
-  // TEMP classes for debugging
-
-  public static function empty(Field $field): Field
+  private static function getDefaultSeparator()
   {
-    return $field->value('');
+    return option('trych.field-composer.defaultSeparator', '');
   }
 
 }
