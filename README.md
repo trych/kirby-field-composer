@@ -41,8 +41,8 @@ field(
   [
     $artwork->artist()->or('Unknown'),
     field($artwork->born(), $artwork->died(), '-')
-    ->prefix(field('*')->whenNot($artwork->died())),
-  $artwork->artistorigin()
+      ->prefix(field('*')->whenNot($artwork->died())),
+    $artwork->artistorigin()
   ],
   [
     $artwork->title()->or('Untitled'),
