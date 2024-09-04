@@ -154,7 +154,7 @@ $page->title()->merge($page->artist(), 'Oil on canvas', $page->year());
 
 Empty fields will simply be omitted, without introducing duplicate separators.
 ```php
-$page->title()->merge($page->artist(), $page->info(), $page->year())
+$page->title()->merge($page->artist(), $page->info(), $page->year());
 // => Haze, Jil Nash, 2014
 ```
 
@@ -196,14 +196,14 @@ $page->title()->merge($page->year(), $page->artist(), $page->museum(), false);
 If the last argument is used to specify the position, the separator string can be provided as the *second to last* argument.
 ```php
 $page->title()->upper()->merge($page->artist(), $page->year(), $page->museum(), ' / ', 2);
-// => 2014 / Jil Nash / HAZE / Tate
+// => Jil Nash / 2014 / HAZE / Tate
 ```
 
 If an array is provided as one of the arguments, its entries will be merged by the same rules, except that there is no original field value that is passed and therefore there is also no position option. This allows for complex merging when there are several "sub-groups" in the resulting string that might have different separators.
 ```php
 $page->title()->upper()->merge(
-  [$page->artist(), $page->year()], // arguments will be merged separated by the default by `, `
-  [$page->description(), $page->info(), $page->museum(), '|'], // arguments will be merged separated by `|`
+  [$page->artist(), $page->year()], // arguments will be merged separated by the default by ', '
+  [$page->description(), $page->info(), $page->museum(), ' | '], // arguments will be merged separated by ' | '
   'Sold',
   '; ' // separator, top level arguments will be merged separated by `; `
 );
