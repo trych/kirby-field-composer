@@ -26,7 +26,8 @@ Kirby::plugin(
     ],
 
     'options' => [
-      'defaultSeparator' => ''
+      'mergeSeparator' => ', ',
+      'affixSeparator' => ''
     ],
 
     'hooks' => [

@@ -35,7 +35,7 @@ class FieldMethods
    */
   public static function merge(Field $field, Field|string|int|bool|array ...$args): Field
   {
-    $separator = self::getDefaultSeparator();
+    $separator = option('trych.field-composer.mergeSeparator');
     $position = 0; // Default position (beginning of the array)
     $includeCurrentField = true;
     $fields = $args;
@@ -111,7 +111,7 @@ class FieldMethods
    */
   public static function prefix(Field $field, Field|string $prefix = '', ?string $separator = null): Field
   {
-    $separator = $separator ?? self::getDefaultSeparator();
+    $separator = $separator ?? option('trych.field-composer.affixSeparator');
     return self::addAffix($field, $prefix, $separator, true);
   }
 
@@ -125,7 +125,7 @@ class FieldMethods
    */
   public static function suffix(Field $field, Field|string $suffix = '', ?string $separator = null): Field
   {
-    $separator = $separator ?? self::getDefaultSeparator();
+    $separator = $separator ?? option('trych.field-composer.affixSeparator');
     return self::addAffix($field, $suffix, $separator, false);
   }
 
@@ -238,7 +238,7 @@ class FieldMethods
   {
     if ($field->isEmpty()) return $field;
 
-    $separator = $separator ?? self::getDefaultSeparator();
+    $separator = $separator ?? option('trych.field-composer.affixSeparator');
     $after = $after ?? $before;
 
     $prefixedField = self::addAffix($field, $before, $separator, true);
@@ -344,11 +344,6 @@ class FieldMethods
       : $field->value() . $separator . $affixValue;
 
     return $field->value($mergedValue);
-  }
-
-  private static function getDefaultSeparator()
-  {
-    return option('trych.field-composer.defaultSeparator', '');
   }
 
 }

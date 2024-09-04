@@ -9,7 +9,7 @@ class FieldComposer
 {
 
   public static function compose(...$args): Field {
-    $separator = option('trych.field-composer.defaultSeparator', '');
+    $separator = option('trych.field-composer.mergeSeparator');
     $fields = $args;
 
     if (is_string(end($fields))) {
