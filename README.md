@@ -36,7 +36,6 @@ The plugin offers methods to make this process significantly simpler. Here is ho
 
 ```php
 // assuming we have a variable $artwork holding infos on the artwork
-// and assuming our default separator (see below) is set to ', '
 field(
   [
     $artwork->artist()->or('Unknown'),
