@@ -147,7 +147,7 @@ $page->title()->merge($page->artist(), $page->info(), $page->year());
 // => Haze, Jil Nash, 2014
 ```
 
-If a string is used as the last argument, it will be interpreted as the separator to place between the separate parts. Otherwise the default separator (`''` or the one set via the `defaultSeparator` option) will be used.
+If a string is used as the last argument, it will be interpreted as the separator to place between the separate parts. Otherwise the default separator (`''` or the one set via the `mergeSeparator` option) will be used.
 ```php
 $page->title()->merge($page->artist(), $page->year(), ' / ');
 // => Haze / Jil Nash / 2014
@@ -440,7 +440,7 @@ return [
 ];
 ```
 
-If a separator is explicitly provided in a method call of the mentioned field methods, it will override the `defaultSeparator` for that specific operation.
+If a separator is explicitly provided in a method call of the mentioned field methods, it will override these options for that specific operation.
 
 ---
 ## Contributing
