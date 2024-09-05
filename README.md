@@ -35,13 +35,13 @@ Usually this would require a lot of fiddling with conditional statements, implod
 The plugin offers methods to make this process significantly simpler. Here is how the code could look, making use of some of the plugin’s field methods:
 
 ```php
-// assuming we have a variable $artwork holding infos on the artwork
+// assuming we have two variables $artwork and $artist holding content on both
 field(
   [
-    $artwork->artist()->or('Unknown'),
-    field($artwork->born(), $artwork->died(), '-')
-      ->prefix('*', when: $artwork->died()->isEmpty()),
-    $artwork->artistorigin()
+    $artist->name()->or('Unknown'),
+    field($artist->born(), $artist->died(), '-')
+      ->prefix('*', when: $artist->died()->isEmpty()),
+    $artist->birthplace()
   ],
   [
     $artwork->title()->or('Untitled'),
