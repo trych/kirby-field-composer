@@ -1,7 +1,7 @@
 {
     "name": "trych/kirby-field-composer",
     "description": "Kirby plugin providing methods to intelligently handle field values to compose complex strings.",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "license": "MIT",
     "type": "kirby-plugin",
     "homepage": "https://github.com/trych/kirby-field-composer",

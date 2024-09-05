@@ -106,11 +106,14 @@ class FieldMethods
    *
    * @param Field|string $prefix The prefix to add
    * @param string|null $separator An optional separator between the prefix and the field value
+   * @param mixed $condition A condition that determines whether to add the prefix
    *
    * @return Field The modified field
    */
-  public static function prefix(Field $field, Field|string $prefix = '', ?string $separator = null): Field
+  public static function prefix(Field $field, Field|string $prefix = '', ?string $separator = null, mixed $condition = true): Field
   {
+    if ($field->isEmpty() || !self::isValidCondition($condition)) return $field;
+
     $separator = $separator ?? option('trych.field-composer.affixSeparator');
     return self::addAffix($field, $prefix, $separator, true);
   }
@@ -120,11 +123,14 @@ class FieldMethods
    *
    * @param Field|string $suffix The suffix to add
    * @param string|null $separator An optional separator between the field value and the suffix
+   * @param mixed $condition A condition that determines whether to add the suffix
    *
    * @return Field The modified field
    */
-  public static function suffix(Field $field, Field|string $suffix = '', ?string $separator = null): Field
+  public static function suffix(Field $field, Field|string $suffix = '', ?string $separator = null, mixed $condition = true): Field
   {
+    if ($field->isEmpty() || !self::isValidCondition($condition)) return $field;
+
     $separator = $separator ?? option('trych.field-composer.affixSeparator');
     return self::addAffix($field, $suffix, $separator, false);
   }
@@ -231,12 +237,13 @@ class FieldMethods
    * @param Field|string $before The string or field to prepend to the field's value
    * @param Field|string|null $after The string or field to append to the field's value. If null, $before is used
    * @param string|null $separator An optional separator between the field value and $before and $after
+   * @param mixed $condition A condition that determines whether to wrap the field
    *
    * @return Field The modified field with wrapped value, or the original field if it's empty
    */
-  public static function wrap(Field $field, Field|string $before, Field|string|null $after = null, ?string $separator = null): Field
+  public static function wrap(Field $field, Field|string $before, Field|string|null $after = null, ?string $separator = null, mixed $condition = true): Field
   {
-    if ($field->isEmpty()) return $field;
+    if ($field->isEmpty() || !self::isValidCondition($condition)) return $field;
 
     $separator = $separator ?? option('trych.field-composer.affixSeparator');
     $after = $after ?? $before;
@@ -252,37 +259,17 @@ class FieldMethods
    * @param array $attr An associative array of HTML attributes for the tag
    * @param string|null $indent The indentation string, or null for no indentation
    * @param int $level The indentation level
+   * @param mixed $condition A condition that determines whether to wrap the field in a tag
    *
    * @return Field The modified field with its value wrapped in the specified HTML tag
    */
-  public static function tag(Field $field, string $tag, array $attr = [], ?string $indent = null, int $level = 0): Field
+  public static function tag(Field $field, string $tag, array $attr = [], ?string $indent = null, int $level = 0, mixed $condition = true): Field
   {
-    if ($field->isEmpty()) return $field;
+    if ($field->isEmpty() || !self::isValidCondition($condition)) return $field;
 
     return $field->value(
       Html::tag($tag, $field->value(), $attr, $indent, $level)
     );
-  }
-
-  /**
-   * Applies a switch-like logic to the field based on given conditions.
-   *
-   * @param array $cases An associative array of condition => action pairs
-   * @param mixed $fallback The fallback value if no conditions are met. If no fallback value is given and no conditions are met, the original field will be returned
-   *
-   * @return Field The modified field based on the first true condition, or the fallback value
-   */
-  public static function switch(Field $field, array $cases, $fallback = null): Field
-  {
-    foreach ($cases as $condition => $action) {
-      if ($condition) {
-        if (is_callable($action)) {
-          return $field->value($action($field));
-        }
-        return $field->value($action);
-      }
-    }
-    return $fallback !== null ? $field->value($fallback) : $field;
   }
 
   /**

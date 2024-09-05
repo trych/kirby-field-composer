@@ -8,11 +8,30 @@ use Kirby\Content\Field;
 class FieldComposer
 {
 
-  public static function compose(...$args): Field {
+  /**
+   * Composes multiple fields or values into a single field.
+   *
+   * This method can handle various types of input, including Fields, strings,
+   * integers, and arrays. It filters out empty values and joins the remaining
+   * values with a separator.
+   *
+   * @param mixed ...$args Variable number of arguments. These can be:
+   *                       - Field objects
+   *                       - Strings
+   *                       - Integers
+   *                       - Arrays (which will be recursively composed)
+   *                       - A separator string (if it's the last argument and
+   *                         there are at least 3 arguments total)
+   *
+   * @return Field The composed field
+   */
+  public static function compose(mixed ...$args): Field {
     $separator = option('trych.field-composer.mergeSeparator');
     $fields = $args;
 
-    if (is_string(end($fields))) {
+    // consider the last argument a separator if there are at least 3 arguments
+    // and the last one is a string
+    if (count($fields) >= 3 && is_string(end($fields))) {
       $separator = array_pop($fields);
     }
 
@@ -32,5 +51,4 @@ class FieldComposer
 
     return new Field(null, '', implode($separator, $fieldValues));
   }
-
 }

@@ -14,8 +14,8 @@ Kirby Field Composer is a plugin that simplifies complex field operations in Kir
 ## Overview
 Simple use cases include merging multiple fields to a single field’s value …
 ```php
-$page->title()->merge($page->author(), $page->year(), ', ');
-// => Secret Diaries, Jane Doe, 2008
+$page->title()->merge($page->author(), $page->year());
+// => Chasing Starlight, Jane Doe, 2008
 ```
 
 … conditionally prefixing fields with certain values …
@@ -114,16 +114,6 @@ Info:
 Museum: Tate
 ```
 
-Let's also assume we have set the plugin's default separator to be a comma followed by a space:
-```php
-// /site/config/config.php
-
-return [
-  'trych.field-composer' => [
-    'defaultSeparator' => ', '
-  ]
-];
-```
 # Field Methods
 
 Each of the plugin's field methods returns a field, so the methods can all be used to chain multiple field methods.
@@ -134,7 +124,7 @@ Merges the field's value with the given arguments. The `merge()` method is the h
 
 - **`$args`:** one or multiple arguments (fields, strings, numbers, arrays) that will be merged to a single field's value.
 
-In its most simple form, it can merge the value of the original field with one or more given arguments.
+In its most simple form, it can merge the value of the original field with one or more given arguments. The default separator is `, `.
 ```php
 $page->title()->merge($page->year());
 // => Haze, 2014
@@ -210,9 +200,9 @@ $page->title()->upper()->merge(
 // => HAZE; Jil Nash, 2014; Faint shapes lost in mist | Tate; Sold
 ```
 
-### `$field->prefix($prefix, $separator)`
+### `$field->prefix($prefix, $separator, $condition)`
 
-Adds a prefix to the field's value. If the field is empty, no prefix is added, so the field stays empty. If an empty field is passed as the prefix, there will be no prefix and no separator added, so the field keeps its original value.
+Adds a prefix to the field's value. If the field is empty or the condition is not met, no prefix is added. If an empty field is passed as the prefix, there will be no prefix and no separator added, so the field keeps its original value.
 
 - **`$prefix`:** The prefix to add (can be a Field or a string).
 - **`$separator`:** Optional separator between the prefix and the field value.
@@ -226,14 +216,18 @@ $page->info()->prefix('Additional info: ');
 
 $page->title()->prefix($page->artist(), ': ');
 // => Jil Nash: Haze
+
+$artist->born()->prefix('*', '', $artist->died()->isEmpty());
+// => *1982
 ```
 
-### `$field->suffix($suffix, $separator)`
+### `$field->suffix($suffix, $separator, $condition)`
 
-Adds a suffix to the field's value. If the field is empty, no suffix is added, so the field stays empty.  If an empty field is passed as the suffix, there will be no suffix and no separator added, so the field keeps its original value.
+Adds a suffix to the field's value. If the field is empty or the condition is not met, no suffix is added. If an empty field is passed as the suffix, there will be no suffix and no separator added, so the field keeps its original value.
 
 - **`$suffix`:** The suffix to add (can be a Field or a string).
 - **`$separator`:** Optional separator between the field value and the suffix.
+- **`$condition`:** Optional condition that determines whether to add the suffix. Default is `true`.
 
 ```php
 $page->width()->suffix(' cm');
@@ -248,17 +242,18 @@ $page->width()->merge($page->height(), $page->depth(), ' × ')
 ```
 In the above example, if all of the fields `width`, `height`, `depth` were empty, the `merge` would result in an empty field and neither the `prefix` nor the `suffix` values would be applied.
 
-### `$field->wrap($before, $after, $separator)`
+### `$field->wrap($before, $after, $separator, $condition)`
 
-Wraps the field's value with specified strings or field values. If the field is empty, no wrapping strings will be added, so the field stays empty.
+Wraps the field's value with specified strings or field values. If the field is empty or the condition is not met, no wrapping strings will be added.
 
 - **`$before`:** The string or field to prepend to the field's value.
 - **`$after`:** The string or field to append to the field's value. If null, `$before` is used.
 - **`$separator`:** An optional separator between the field value and the wrapping strings.
+- **`$condition`:** Optional condition that determines whether to wrap the field. Default is `true`.
 
 ```php
-$page->title()->wrap('<<', '>>', '');
-// => <<Haze>>
+$page->title()->wrap('»', '«');
+// => »Haze«
 ```
 
 If an empty field is passed to `before` or `after`, there is no string prepended / appended and no separator inserted.
@@ -267,14 +262,15 @@ $page->artist()->wrap($page->title(), $page->info(), ' | ');
 // => Haze | Jil Nash
 ```
 
-### `$field->tag($tag, $attr, $indent, $level)`
+### `$field->tag($tag, $attr, $indent, $level, $condition)`
 
-Wraps the field's value in an HTML tag. If the field is empty, no tags are added, so the field stays empty.
+Wraps the field's value in an HTML tag. If the field is empty or the condition is not met, no tags are added.
 
 - **`$tag`:** The HTML tag to wrap the field's value in.
 - **`$attr`:** An associative array of HTML attributes for the tag.
 - **`$indent`:** The indentation string, or null for no indentation.
 - **`$level`:** The indentation level. Defaults to `0`.
+- **`$condition`:** Optional condition that determines whether to wrap the field in a tag. Default is `true`.
 
 ```php
 $page->title()->tag('h1');
@@ -378,14 +374,14 @@ $page->title()->lower()->str('increment');
 The plugin provides a global helper function `field()` along with a shortcut alias `f()`.
 
 ### `field(...$args)`
-The field helper allows you to compose a field from given values. This field can then be used to chain it with other field methods. The arguments work the same way as they do in the `$field->merge()` field method described above: You can pass fields, strings, numbers and they will be merged to the new field’s value.
+The field helper allows you to compose a field from given values. This field can then be used to chain it with other field methods. The arguments work the same way as they do in the `$field->merge()` field method described above: You can pass fields, strings or numbers and they will be merged to the new field’s value.
 
 ```php
 field($page->title(), $page->artist(), 'sold', ', ')->upper()
 // => HAZE, JIL NASH, SOLD
 ```
 
-If an array is passed, it will merge its values to a field by the same rules. If the last given argument is a string, it will be interpreted as a separator. Unlike the `$field->merge()` method, the last argument cannot be used as a position parameter as there is no initial field value that gets passed into the `field()` helper.
+If an array is passed, it will merge its values to a field by the same rules. If there are three or more arguments and the last given argument is a string, it will be interpreted as a separator. Unlike the `$field->merge()` method, the last argument cannot be used as a position parameter as there is no initial field value that gets passed into the `field()` helper.
 
 The field helper is especially useful if you need to compose a field where the first value is part of a „sub-group“ or if you need to chain further field methods to such a sub-group, as shown in the example below.
 
@@ -395,8 +391,8 @@ field(
   $page->artist(),
   field($page->width(), $page->height(), ' × ')->suffix(' cm')
     ->when($page->width(), $page->height()),
-  $page->description()->prefix('Subject: ', '')),
-  $page->info()->prefix('Info: ', ''),
+  $page->description()->prefix('Subject: '),
+  $page->info()->prefix('Info: '),
   '; ' // separator for the top level
 );
 // => <em>Haze</em>, 2014; Jil Nash; 48.2 × 67 cm; Subject: Faint shapes lost in mist.
@@ -420,14 +416,21 @@ require __DIR__ . '/kirby/bootstrap.php';
 echo (new Kirby)->render();
 ```
 # Options
-The plugin has a single option, `defaultSeparator`, that sets the default separator for the field methods `$field->merge()`, `$field->prefix()`, `$field->suffix()` and `$field->wrap()`. Its default value is an empty string `''` .
+The plugin has two options, `mergeSeparator` and `affixSeparator`.
+
+The `mergeSeparator` sets the default separator for the `$field->merge()` as well as the `field()` helper. Its default value is a comma followed by a space: `', '`.
+
+The `affixSeparator` sets the default separator for the field methods `$field->prefix()`, `$field->suffix()` and `$field->wrap()` ("affix" being the umbrella term for "prefix" and "suffix"). Its default value is an empty string: `''`.
+
+You can change both defaults in your `config.php` file.
 
 ```php
 // /site/config/config.php
 
 return [
   'trych.field-composer' => [
-    'defaultSeparator' => ', '
+    'mergeSeparator' => ' | ',
+    'affixSeparator' => ' '
   ]
 ];
 ```
