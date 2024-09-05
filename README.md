@@ -40,7 +40,7 @@ field(
   [
     $artwork->artist()->or('Unknown'),
     field($artwork->born(), $artwork->died(), '-')
-      ->prefix(field('*')->whenNot($artwork->died())),
+      ->prefix('*', when: $artwork->died()->isEmpty()),
     $artwork->artistorigin()
   ],
   [
@@ -155,11 +155,11 @@ $page->title()->merge($page->artist(), $page->year(), ' / ');
 
 If you want to merge a string as the last argument, remember to explicitly set the separator even if it matches the default separator, otherwise the last string to merge would be interpreted as separator.
 ```php
-// 🚫 this will use the string `Sold` as a separator
+// 🚫 this will use the string 'Sold' as a separator
 $page->title()->merge($page->artist(), $page->year(), 'Sold');
 // => HazeSoldJil NashSold2014
 
-// ✅ provide the separator explicitly as the last argument instead
+// ✅ pass the separator explicitly as the last argument instead
 $page->title()->merge($page->artist(), $page->year(), 'Sold', ', ');
 // => Haze, Jil Nash, 2014, Sold
 ```
@@ -199,12 +199,13 @@ $page->title()->upper()->merge(
 // => HAZE; Jil Nash, 2014; Faint shapes lost in mist | Tate; Sold
 ```
 
-### `$field->prefix($prefix, $separator, $condition)`
+### `$field->prefix($prefix, $separator, $when)`
 
 Adds a prefix to the field's value. If the field is empty or the condition is not met, no prefix is added. If an empty field is passed as the prefix, there will be no prefix and no separator added, so the field keeps its original value.
 
 - **`$prefix`:** The prefix to add (can be a Field or a string).
 - **`$separator`:** Optional separator between the prefix and the field value.
+- **`$when`:** Optional condition that determines whether to add the prefix. Default is `true`.
 
 ```php
 $page->title()->prefix('Title: ');
@@ -218,15 +219,20 @@ $page->title()->prefix($page->artist(), ': ');
 
 $artist->born()->prefix('*', '', $artist->died()->isEmpty());
 // => *1982
+
+// if you do not like to pass redundant arguments or like to be explicit
+// you can also pass named arguments
+$artist->born()->prefix('*', when: $artist->died()->isEmpty());
+// => *1982
 ```
 
-### `$field->suffix($suffix, $separator, $condition)`
+### `$field->suffix($suffix, $separator, $when)`
 
 Adds a suffix to the field's value. If the field is empty or the condition is not met, no suffix is added. If an empty field is passed as the suffix, there will be no suffix and no separator added, so the field keeps its original value.
 
 - **`$suffix`:** The suffix to add (can be a Field or a string).
 - **`$separator`:** Optional separator between the field value and the suffix.
-- **`$condition`:** Optional condition that determines whether to add the suffix. Default is `true`.
+- **`$when`:** Optional condition that determines whether to add the suffix. Default is `true`.
 
 ```php
 $page->width()->suffix(' cm');
@@ -241,14 +247,14 @@ $page->width()->merge($page->height(), $page->depth(), ' × ')
 ```
 In the above example, if all of the fields `width`, `height`, `depth` were empty, the `merge` would result in an empty field and neither the `prefix` nor the `suffix` values would be applied.
 
-### `$field->wrap($before, $after, $separator, $condition)`
+### `$field->wrap($before, $after, $separator, $when)`
 
 Wraps the field's value with specified strings or field values. If the field is empty or the condition is not met, no wrapping strings will be added.
 
 - **`$before`:** The string or field to prepend to the field's value.
 - **`$after`:** The string or field to append to the field's value. If null, `$before` is used.
 - **`$separator`:** An optional separator between the field value and the wrapping strings.
-- **`$condition`:** Optional condition that determines whether to wrap the field. Default is `true`.
+- **`$when`:** Optional condition that determines whether to wrap the field. Default is `true`.
 
 ```php
 $page->title()->wrap('»', '«');
@@ -261,7 +267,7 @@ $page->artist()->wrap($page->title(), $page->info(), ' | ');
 // => Haze | Jil Nash
 ```
 
-### `$field->tag($tag, $attr, $indent, $level, $condition)`
+### `$field->tag($tag, $attr, $indent, $level, $when)`
 
 Wraps the field's value in an HTML tag. If the field is empty or the condition is not met, no tags are added.
 
@@ -269,7 +275,7 @@ Wraps the field's value in an HTML tag. If the field is empty or the condition i
 - **`$attr`:** An associative array of HTML attributes for the tag.
 - **`$indent`:** The indentation string, or null for no indentation.
 - **`$level`:** The indentation level. Defaults to `0`.
-- **`$condition`:** Optional condition that determines whether to wrap the field in a tag. Default is `true`.
+- **`$when`:** Optional condition that determines whether to wrap the field in a tag. Default is `true`.
 
 ```php
 $page->title()->tag('h1');
