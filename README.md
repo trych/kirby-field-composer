@@ -129,7 +129,7 @@ $page->title()->merge($page->year());
 // => Haze, 2014
 ```
 
-Further field methods can still be chained to the merge method.
+Further field methods can still be chained to the `merge()` method.
 ```php
 $page->title()->merge($page->artist())->upper();
 // => HAZE, JIL NASH
@@ -147,7 +147,7 @@ $page->title()->merge($page->artist(), $page->info(), $page->year());
 // => Haze, Jil Nash, 2014
 ```
 
-If a string is used as the last argument, it will be interpreted as the separator to place between the separate parts. Otherwise the default separator (`''` or the one set via the `mergeSeparator` option) will be used.
+If a string is used as the last argument, it will be interpreted as the separator to place between the separate parts. Otherwise the default separator (`', '` or the one set via the `mergeSeparator` option) will be used.
 ```php
 $page->title()->merge($page->artist(), $page->year(), ' / ');
 // => Haze / Jil Nash / 2014
