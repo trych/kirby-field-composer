@@ -20,8 +20,7 @@ class FieldComposer
    *                       - Strings
    *                       - Integers
    *                       - Arrays (which will be recursively composed)
-   *                       - A separator string (if it's the last argument and
-   *                         there are at least 3 arguments total)
+   *                       - A separator string (if it's the last argument)
    *
    * @return Field The composed field
    */
@@ -29,9 +28,8 @@ class FieldComposer
     $separator = option('trych.field-composer.mergeSeparator');
     $fields = $args;
 
-    // consider the last argument a separator if there are at least 3 arguments
-    // and the last one is a string
-    if (count($fields) >= 3 && is_string(end($fields))) {
+    // consider the last argument a separator if it is a string
+    if (is_string(end($fields))) {
       $separator = array_pop($fields);
     }
 
