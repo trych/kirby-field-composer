@@ -428,7 +428,7 @@ $page->artist()->log('Artist: ', 'artist_logs');
 
 // Log entire field object
 $page->artist()->log('Artist field: ', 'field_logs', true);
-// => logs the full field object in dump format to site/logs/artist_logs.log
+// => logs the full field object in dump format to site/logs/field_logs.log
 ```
 
 # Helpers
