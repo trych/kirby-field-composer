@@ -7,6 +7,8 @@ use Closure;
 use Kirby\Content\Field;
 use Kirby\Toolkit\Str;
 use Kirby\Toolkit\Html;
+use Kirby\Toolkit\F;
+use Kirby\Toolkit\Dir;
 use Kirby\Exception\InvalidArgumentException;
 
 class FieldMethods
@@ -303,6 +305,82 @@ class FieldMethods
     $result = Str::$method($field->value(), ...$args);
 
     $field->value = $result;
+    return $field;
+  }
+
+  /**
+   * Dumps the field's value for debugging and returns the field.
+   *
+   * This method is a wrapper around Kirby's dump() method. It dumps the field's
+   * current value and returns the field to allow for further method chaining. The
+   * dumped value can be controlled via optional parameters.
+   *
+   * @param string $msg Optional debugging message that will be added to the dump output.
+   *                    Use {{ val }} as placeholder for the value, or the string will be used as prefix
+   * @param bool $echo Whether to echo the dump (true) or return it as the field's new value (false)
+   * @param bool $dumpField If set to true will dump the field itself instead of its value
+   *
+   * @return Field The original field when echoing the dump, otherwise the modified
+   *               field with the dump output as its value
+   *
+   */
+  public static function dump(Field $field, ?string $msg = null, bool $echo = true, bool $dumpField = false): Field
+  {
+    $val = $field->value();
+    $dumpVal = $dumpField ? $field : $val;
+
+    if ($msg !== null) {
+      $fieldOutput = $dumpField ? trim(print_r($field, true)) : $val;
+      $formattedMsg = preg_match('/{{[ ]*val[ ]*}}/', $msg) ?
+        Str::template($msg, ['val' => $fieldOutput]) :
+        $msg . $fieldOutput;
+
+      dump($formattedMsg);
+    } else {
+      dump($dumpVal);
+    }
+
+    if (!$echo) {
+      return $field->value(dump($dumpVal, false));
+    }
+
+    return $field;
+  }
+
+  /**
+   * Logs the field's value to a log file and returns the field.
+   *
+   * Creates a timestamped log entry in the site/logs directory. If the directory
+   * doesn't exist, it will be created. Each log entry includes a timestamp and
+   * the field's value, optionally wrapped in a custom message.
+   *
+   * @param string $msg Optional message for the log entry. Use {{ val }} as placeholder
+   *                    for the value, or the string will be used as prefix
+   * @param string $filename Name of the log file without extension (default: 'field_composer').
+   *                         If the file already exists, the log entry will be appended to the file.
+   * @param bool $logField If set to true will log the field itself in Kirby's dump() format
+   *                       instead of the field's value
+   *
+   * @return Field The original field, allowing for method chaining
+   */
+  public static function log(Field $field, ?string $msg = null, string $filename = 'field_composer', bool $logField = false): Field
+  {
+    $val = $logField ? trim(print_r($field, true)) : $field->value();
+    if ($msg !== null) {
+      $val = preg_match('/{{[ ]*val[ ]*}}/', $msg) ? Str::template($msg, ['val' => $val]) : $msg . $val;
+    }
+
+    $time = date('Y-m-d H:i:s');
+    $log = "[$time] $val" . PHP_EOL;
+
+    $dir = kirby()->root('site') . '/logs';
+    if (!Dir::exists($dir)) {
+      Dir::make($dir);
+    }
+
+    $filepath = $dir . '/' . $filename . '.log';
+    F::write($filepath, $log, true);
+
     return $field;
   }
 

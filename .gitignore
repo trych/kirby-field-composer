@@ -26,3 +26,8 @@ Icon
 /vendor/**/tests/*
 /vendor/**/php4/*
 /vendor/getkirby/composer-installer
+
+# repomix file
+# ------------
+
+repomix*.txt

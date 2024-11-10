@@ -375,6 +375,62 @@ $page->title()->lower()->str('increment');
 // => haze-1
 ```
 
+### `$field->dump($msg, $echo, $dumpField)`
+
+Dumps the field's value for debugging and returns the field. This is a wrapper around Kirby's `dump()` method that maintains chainability.
+
+- **`$msg`:** Optional debugging message that will be added to the dump output. If the message includes the placeholder `{{ val }}`, the field's value will replace it, otherwise the message will be used as prefix.
+- **`$echo`:** Whether to echo the dump (`true`) or return it as the field's new value (`false`). Default is `true`.
+- **`$dumpField`:** If set to `true` will dump the field itself instead of its value. Default is `false`.
+
+```php
+// Simple dump
+$page->artist()->dump();
+
+// With prefix
+$page->artist()->dump('artist value: ');
+
+// With template
+$page->artist()->dump('The artist known as {{ val }}!!');
+
+// Return dump result instead of echoing
+$page->artist()->dump('Artist: ', false)->upper();
+// => "ARTIST: JIL NASH"
+
+// Dump entire field object
+$page->artist()->dump('artist field: ', true, true);
+```
+
+### `$field->log($msg, $filename, $logField)`
+
+Logs the field's value to a log file and returns the field. Creates a timestamped log entry in the `site/logs` directory. Each log entry includes a timestamp and the field's value, optionally wrapped in a custom debugging message. This method is particularly useful when debugging field operations in contexts where output cannot be displayed, such as in Kirby Panel query strings or on production servers.
+
+- **`$msg`:** Optional debugging message for the log entry. If the message includes the placeholder `{{ val }}`, the field's value will replace it, otherwise the message will be used as prefix.
+- **`$filename`:** Name of the log file without extension (default: `'field_composer'`). If the file already exists, the log entry will be appended to the file.
+- **`$logField`:** If set to true will log the field itself in Kirby's `dump()` format instead of the field's value. Default is `false`.
+
+```php
+// Simple log
+$page->artist()->log();
+// => [2024-11-10 14:30:22] Jil Nash
+
+// With prefix
+$page->artist()->log('Artist: ');
+// => [2024-11-10 14:30:22] Artist: Jil Nash
+
+// With template
+$page->artist()->log('Found artist {{ val }} in page');
+// => [2024-11-10 14:30:22] Found artist Jil Nash in page
+
+// Custom log file
+$page->artist()->log('Artist: ', 'artist_logs');
+// => creates/appends to site/logs/artist_logs.log
+
+// Log entire field object
+$page->artist()->log('Artist field: ', 'field_logs', true);
+// => logs the full field object in dump format to site/logs/artist_logs.log
+```
+
 # Helpers
 The plugin provides a global helper function `field()` along with a shortcut alias `f()`.
 

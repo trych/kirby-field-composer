@@ -23,6 +23,8 @@ Kirby::plugin(
       'wrap' => [FieldMethods::class, 'wrap'],
       'tag' => [FieldMethods::class, 'tag'],
       'str' => [FieldMethods::class, 'str'],
+      'dump' => [FieldMethods::class, 'dump'],
+      'log'  => [FieldMethods::class, 'log'],
     ],
 
     'options' => [
