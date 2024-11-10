@@ -10,6 +10,7 @@ Kirby Field Composer is a plugin that simplifies complex field operations in Kir
 - 🏷️ **Smart Handling of Empty Fields:** No separators get inserted when fields are empty.
 - 🚦 **Conditional Field Handling**: Apply conditions to field rendering.
 - 🔡 **String Manipulation**: Apply Kirby's `Str` class methods directly to fields.
+- 🔍 **Debugging Tools**: Methods for logging and debugging complex field method chains.
 
 ## Overview
 Simple use cases include merging multiple fields to a single field’s value …
