@@ -20,7 +20,7 @@ class FieldComposer
    *                       - Strings
    *                       - Integers
    *                       - Arrays (which will be recursively composed)
-   *                       - A separator string (if it's the last argument)
+   *                       - A separator string (if it's the last of multiple arguments)
    *
    * @return Field The composed field
    */
@@ -29,8 +29,10 @@ class FieldComposer
     $fields = $args;
 
     // consider the last argument a separator if it is a string
-    if (is_string(end($fields))) {
-      $separator = array_pop($fields);
+    if (count($fields) > 1) {
+      if (is_string(end($fields))) {
+        $separator = array_pop($fields);
+      }
     }
 
     $fieldValues = array_values(array_filter(

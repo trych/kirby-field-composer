@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2024-12-23
+
+### Changed
+- Improved argument handling: `merge()`, `field()` and `f()` never treat single string arguments
+  as separator
+
 ## [1.4.0] - 2024-11-10
 
 ### Added

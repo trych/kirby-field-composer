@@ -443,7 +443,7 @@ field($page->title(), $page->artist(), 'sold', ', ')->upper()
 // => HAZE, JIL NASH, SOLD
 ```
 
-If an array is passed, it will merge its values to a field by the same rules. If the last given argument is a string, it will be interpreted as a separator. Unlike the `$field->merge()` method, the last argument cannot be used as a position parameter as there is no initial field value that gets passed into the `field()` helper.
+If an array is passed, it will merge its values to a field by the same rules. If there is more than one argument and the last given argument is a string, it will be interpreted as a separator. Unlike the `$field->merge()` method, the last argument cannot be used as a position parameter as there is no initial field value that gets passed into the `field()` helper.
 
 The field helper is especially useful if you need to compose a field where the first value is part of a „sub-group“ or if you need to chain further field methods to such a sub-group, as shown in the example below.
 
