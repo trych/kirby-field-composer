@@ -262,15 +262,28 @@ class FieldMethods
    * @param string|null $indent The indentation string, or null for no indentation
    * @param int $level The indentation level
    * @param mixed $when A condition that determines whether to wrap the field in a tag; defaults to `true`
+   * @param bool $encode If `true` (default), encodes HTML characters in content. Set to `false` for
+   *                     outer tags in nested `tag()` calls to preserve inner HTML structure.
    *
    * @return Field The modified field with its value wrapped in the specified HTML tag
    */
-  public static function tag(Field $field, string $tag, array $attr = [], ?string $indent = null, int $level = 0, mixed $when = true): Field
+  public static function tag(
+    Field $field,
+    string $tag,
+    array $attr = [],
+    ?string $indent = null,
+    int $level = 0,
+    mixed $when = true,
+    bool $encode = true
+  ): Field
   {
+
     if ($field->isEmpty() || !self::isValidCondition($when)) return $field;
 
+    $content = $encode ? $field->value() : [$field->value()];
+
     return $field->value(
-      Html::tag($tag, $field->value(), $attr, $indent, $level)
+      Html::tag($tag, $content, $attr, $indent, $level)
     );
   }
 

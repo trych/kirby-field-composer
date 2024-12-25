@@ -268,7 +268,7 @@ $page->artist()->wrap($page->title(), $page->info(), ' | ');
 // => Haze | Jil Nash
 ```
 
-### `$field->tag($tag, $attr, $indent, $level, $when)`
+### `$field->tag($tag, $attr, $indent, $level, $when, $encode)`
 
 Wraps the field's value in an HTML tag. If the field is empty or the condition is not met, no tags are added.
 
@@ -277,6 +277,7 @@ Wraps the field's value in an HTML tag. If the field is empty or the condition i
 - **`$indent`:** The indentation string, or null for no indentation.
 - **`$level`:** The indentation level. Defaults to `0`.
 - **`$when`:** Optional condition that determines whether to wrap the field in a tag. Default is `true`.
+- **`$encode`:** If `true` (default), encodes HTML in content for security. Set to `false` for outer tags in nested tag calls to preserve inner HTML structure.
 
 ```php
 $page->title()->tag('h1');
@@ -284,6 +285,35 @@ $page->title()->tag('h1');
 
 $page->description()->tag('p', ['class' => 'description']);
 // => <p class="description">Faint shapes lost in mist.</p>
+```
+
+When nesting multiple `tag()` calls like `$field->tag('em')->tag('p')`, the inner HTML tags will be encoded and shown as text rather than rendered as HTML. This happens because each `tag()` call encodes its content for security. To properly nest tags while maintaining security, you need to: encode user content with a regular `tag()` call (`encode: true`), and then for subsequent `tag()` calls set `encode: false` to preserve the HTML structure.
+
+```php
+// 🚫 Incorrect output: inner <em> tags will be encoded and shown as text
+$page->artist()->tag('em')->tag('p');
+
+// 🚫 Insecure: encoding is disabled on both `tag()` calls.
+//              The artist field's content is not sanitized.
+$page->artist()->tag('em', encode: false)
+               ->tag('p', encode: false);
+
+// ✅ Secure: First tag encodes content, outer tag preserves HTML
+$page->artist()->tag('em')  // inner tag encodes user content
+               ->tag('p', encode: false);  // outer tag preserves HTML
+
+// 🚫 Insecure: Even though inner tag encodes initial content,
+//              merging additional content between tag calls breaks the security chain
+$page->artist()->tag('em')  // this encodes artist content
+               ->merge($page->description())  // description content is raw
+               ->tag('p', encode: false);  // preserves HTML, but now includes unencoded content
+
+// ✅ Secure: As long as the tags are only wrapped around already secured content,
+//            they can be chained infinitely without compromising security since the
+//            initial encoding protects all user content
+$page->artist()->tag('em')  // sanitizes content
+               ->tag('strong', encode: false)  // preserves HTML
+               ->tag('p', encode: false);  // preserves HTML
 ```
 
 ### `$field->when(...$conditions)`

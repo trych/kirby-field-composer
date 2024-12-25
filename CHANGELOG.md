@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2024-12-25
+
+### Added
+- New `encode` parameter for `tag()` method to support nesting of HTML tags
+
 ## [1.5.0] - 2024-12-23
 
 ### Changed
