@@ -20,8 +20,11 @@ Kirby::plugin(
       'notWhenAny' => [FieldMethods::class, 'notWhenAny'],
       'whenAll' => [FieldMethods::class, 'whenAll'],
       'whenNone' => [FieldMethods::class, 'whenNone'],
+      'match' => [FieldMethods::class, 'match'],
       'wrap' => [FieldMethods::class, 'wrap'],
       'tag' => [FieldMethods::class, 'tag'],
+      'list' => [FieldMethods::class, 'list'],
+      'count' => [FieldMethods::class, 'count'],
       'str' => [FieldMethods::class, 'str'],
       'dump' => [FieldMethods::class, 'dump'],
       'log'  => [FieldMethods::class, 'log'],
@@ -29,7 +32,9 @@ Kirby::plugin(
 
     'options' => [
       'mergeSeparator' => ', ',
-      'affixSeparator' => ''
+      'affixSeparator' => '',
+      'listJoinSeparator' => ', ',
+      'listConjunction' => null
     ],
 
     'hooks' => [

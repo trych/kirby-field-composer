@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-01-05
+
+### Added
+- New `match()` method to compare field values against conditions with fallback options
+- New `list()` method to format fields as lists with powerful processing options
+- New `count()` method to count items in fields with the same options as `list()`
+
+### Changed
+- Added optional `$when` parameter to `format()`, `dump()` and `log()` methods for conditional execution
+
+### Breaking Changes
+- Reordered parameters in `tag()` method: The `$encode` parameter now precedes the `$when` parameter to maintain consistency with other methods. If you were calling the `tag()` method with positional arguments for the `$when` parameter, you will need to update your code to either use named arguments or add an explicit extra `$encode` parameter before you `$when` parameter.
+
 ## [1.6.0] - 2024-12-25
 
 ### Added

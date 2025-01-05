@@ -8,7 +8,9 @@ Kirby Field Composer is a plugin that simplifies complex field operations in Kir
 - 🌐 **Global Helper Functions**: `field()` and `f()` for easy field composition.
 - 🧬 **Flexible Merging**: Combining multiple fields with custom separators and positioning.
 - 🏷️ **Smart Handling of Empty Fields:** No separators get inserted when fields are empty.
+- 🎯 **Value Matching**: Compare field values against conditions with fallback options
 - 🚦 **Conditional Field Handling**: Apply conditions to field rendering.
+- 📋 **Smart List Methods**: Format fields to lists with powerful processing options
 - 🔡 **String Manipulation**: Apply Kirby's `Str` class methods directly to fields.
 - 🔍 **Debugging Tools**: Methods for logging and debugging complex field method chains.
 
@@ -268,7 +270,7 @@ $page->artist()->wrap($page->title(), $page->info(), ' | ');
 // => Haze | Jil Nash
 ```
 
-### `$field->tag($tag, $attr, $indent, $level, $when, $encode)`
+### `$field->tag($tag, $attr, $indent, $level, $encode, $when)`
 
 Wraps the field's value in an HTML tag. If the field is empty or the condition is not met, no tags are added.
 
@@ -276,8 +278,8 @@ Wraps the field's value in an HTML tag. If the field is empty or the condition i
 - **`$attr`:** An associative array of HTML attributes for the tag.
 - **`$indent`:** The indentation string, or null for no indentation.
 - **`$level`:** The indentation level. Defaults to `0`.
-- **`$when`:** Optional condition that determines whether to wrap the field in a tag. Default is `true`.
 - **`$encode`:** If `true` (default), encodes HTML in content for security. Set to `false` for outer tags in nested tag calls to preserve inner HTML structure.
+- **`$when`:** Optional condition that determines whether to wrap the field in a tag. Default is `true`.
 
 ```php
 $page->title()->tag('h1');
@@ -373,6 +375,24 @@ Alias for `when()`. Returns the field if all conditions are valid.
 
 Alias for `notWhenAny()`. Returns the field if none of the conditions are valid.
 
+### `$field->match($conditions, $when)`
+
+Similar to [PHP's match expression](https://www.php.net/manual/en/control-structures.match.php), this matches the field's value against the keys of an array of key/value pairs and returns their corresponding values if a match is found. In case no match is found, the original field is returned. Alternatively, setting `'default'` as the last key in the array provides a fallback value for unmatched cases.
+
+- **`$conditions`:** Array of key/value pairs where the keys are matched against the field's value
+- **`$when`:** Optional condition that determines whether to run the matching operation. If the condition is not met, the original field is returned unchanged. Default is `true`.
+
+```php
+// Basic matching with fallback
+$page->museum()->match([
+  'Tate' => 'Tate Gallery',
+  'MoMA' => 'Museum of Modern Art',
+  'Louvre' => 'Musée du Louvre',
+  'default' => 'Unknown gallery'
+]);
+// => 'Tate Gallery'
+```
+
 ### `$field->format($callback)`
 
 Applies a custom formatting function to the field's value.
@@ -387,6 +407,103 @@ $page->description()->format(function($value) {
   return preg_replace('/[aeiou]/i', '', $value);
 });
 // => Fnt shps lst n mst.
+```
+
+### `$field->list($split, $join, $conjunction, $serial, $each, $all, $when)`
+
+Converts a field's value into a formatted list with advanced processing options. This method can handle any field type that represents a list: strings (with custom separators), structure fields, pages fields, files fields, users fields, or blocks fields. The method provides options to format the output with custom separators and conjunctions, process individual items, and transform the entire list.
+
+- **`$split`:** Pattern to split string value, `null` for auto-detect, `false` to force array handling (non-array fields will be treated as single item)
+- **`$join`:** String to join list items. Defaults to `, ` or the user-defined `listJoinSeparator` option
+- **`$conjunction`:** Optional conjunction text or callback before last item. Defaults to the no conjunction or the user-configured `listConjunction` option
+- **`$serial`:** Whether to use serial (Oxford) comma before conjunction. Defaults to `false`
+- **`$each`:** Optional callback to process each item
+- **`$all`:** Optional callback to process the entire list array right before formatting it to a list
+- **`$when`:** Optional condition that determines whether to process the field. Default is `true`
+
+In its most basic form, it converts a comma-separated string into a formatted list:
+```php
+// Simple list from comma-separated string
+$page->keywords()->list(',');
+// => red, blue, green
+```
+
+The output format can be customized using the parameters `$join`, `$conjunction` and `$serial`. The `$join` parameter sets the separator between items in the resulting list, while `$conjunction` adds text before the last item. Setting `$serial` to `true` adds an Oxford comma before the conjunction:
+```php
+// Custom join separator
+$page->keywords()->list(',', '|');
+// => red|blue|green
+
+// List with conjunction
+$page->keywords()->list(',', null, 'or')->upper();
+// => RED, BLUE OR GREEN
+
+// List with conjunction and Oxford comma
+$page->keywords()->list(',', null, 'and', true);
+// => red, blue, and green
+```
+
+The method automatically handles Kirby's list-type fields like pages, files, users, blocks, and structure fields. Using the `$each` callback, you can process each item before it gets added to the list. The items are the individual collection items of the given field type. That means a pages field will be converted to page objects, so all page methods can be used in the item callback and accordingly for other collection types.
+```php
+// Splitting a files field and listing the file names by using a callback
+$page->slideshow()->list(
+  each: fn($img) => $img->filename() . ' (' . $img->dimensions() . ' px)'
+);
+// => photo1.jpg (720 × 640 px), photo2.webp (600 × 400 px), photo3.jpg (1280 × 720 px)
+
+// If `false` or an empty string `''` is returned for an item, this item does not get listed
+$page->slideshow()->list(
+  each: fn($img) => $img->extension() === 'jpg' ? $img->filename() : false;
+);
+// => photo1.jpg (720 × 640 px), photo3.jpg (1280 × 720 px)
+
+// List structure field values
+$page->team()->list(each: fn($member) => $member->name());
+// => John Doe, Jane Smith, Alex Johnson
+
+// List block types
+$page->blocks()->list(each: fn($block) => $block->type());
+// => text, gallery, text, quote, image, text
+```
+
+The `$all` callback allows you to transform the entire list before it gets formatted. This is useful for sorting, filtering or removing duplicates:
+```php
+// Sort items alphabetically before joining
+$page->tags()->list(
+    each: fn($tag) => $tag->name(),
+    all: fn($items) => sort($items)
+);
+// => art, culture, design, photography
+
+// Outputting all types of a bocks field with unique, sorted values
+$page->article()->list(
+  each: fn($item) => $item->type(),
+  all: fn($items) => sort(array_unique($items))
+);
+// => gallery, image, quote, text
+```
+
+### `$field->count($split, $each, $when)`
+
+Counts the number of items in a field that represents a list. Works with any field type that can be interpreted as a list: structure fields, pages fields, files fields, users fields, blocks fields, or strings with a user defined separator. If an `$each` callback is provided, strings or booleans can be returned. Empty strings or `false` values are not counted in this case.
+
+- **`$split`:** Pattern to split string value, `null` for auto-detect, `false` to force array handling (non-array fields will be treated as single item)
+- **`$each`:** Optional callback to process each item before counting. Can return transformed values or booleans
+- **`$when`:** Optional condition that determines whether to process the field. Default is `true`
+
+```php
+// Count items in a simple comma-separated list
+$page->keywords()->count();
+// => 3
+
+// Count items in a structure field and count only the items
+// that have an entry in the `street` column
+$page->addresses()->count(null, fn($address) => $address->zip() );
+// => 12 (number of addresses with a given zip code)
+
+// Count images wider than 1000px in a slideshow field
+$page->slideshow()->count(null, fn($file) => $file->width() > 1000 );
+// => 5 (number of images wider than 1000px)
 ```
 
 ### `$field->str($method, ...$args)`
@@ -508,13 +625,17 @@ require __DIR__ . '/kirby/bootstrap.php';
 echo (new Kirby)->render();
 ```
 # Options
-The plugin has two options, `mergeSeparator` and `affixSeparator`.
+The plugin has four options, `mergeSeparator`, `affixSeparator`, `listJoinSeparator` and `listConjunction`.
 
 The `mergeSeparator` sets the default separator for the `$field->merge()` as well as the `field()` helper. Its default value is a comma followed by a space: `', '`.
 
 The `affixSeparator` sets the default separator for the field methods `$field->prefix()`, `$field->suffix()` and `$field->wrap()` ("affix" being the umbrella term for "prefix" and "suffix"). Its default value is an empty string: `''`.
 
-You can change both defaults in your `config.php` file.
+The `listJoinSeparator` sets the default separator between list items for the `$field->list()` method. Its default value is a comma followed by a space: `', '`.
+
+The `listConjunction` sets the default conjunction word for the `$field->list()` method. Its default value is `null` (no conjunction). It could be set to a simple string like `'and'` or for multilingual sites it could set to a callback that returns a translated conjunction: `fn() => t('and')`.
+
+You can change the defaults in your `config.php` file.
 
 ```php
 // /site/config/config.php
@@ -522,12 +643,23 @@ You can change both defaults in your `config.php` file.
 return [
   'trych.field-composer' => [
     'mergeSeparator' => ' | ',
-    'affixSeparator' => ' '
+    'affixSeparator' => ' ',
+    'listJoinSeparator' => '/',
+    'listConjunction' => fn() => t('and')  // returns "and", "und", "et" etc. based on current language
   ]
 ];
 ```
 
-If a separator is explicitly provided in a method call of the mentioned field methods, it will override these options for that specific operation.
+These user-defined options can still be overridden by providing explicit parameters in the method calls:
+```php
+$page->title()->merge($page->artist(), $page->year(), ' / ');
+
+$page->title()->prefix($page->artist(), ': ');
+
+$page->keywords()->list(join: ' | ');
+
+$page->members()->list(conjunction: '&');
+```
 
 ---
 ## Contributing

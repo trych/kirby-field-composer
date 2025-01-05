@@ -95,11 +95,14 @@ class FieldMethods
    *
    * @param Closure $callback A closure that takes the field's value and the field object as arguments,
    *                          and returns the new formatted value
+   * @param mixed $when A condition that determines whether to format the field; defaults to true
    *
    * @return Field The field with its value transformed by the callback
    */
-  public static function format(Field $field, Closure $callback): Field
+  public static function format(Field $field, Closure $callback, mixed $when = true): Field
   {
+    if (!self::isValidCondition($when)) return $field;
+
     return $field->value($callback($field->value(), $field));
   }
 
@@ -234,6 +237,60 @@ class FieldMethods
   }
 
   /**
+   * Matches the field's value against the keys of an array of key/value pairs and returns
+   * the corresponding value of the first match.
+   * If no values are matched, the original field will be returned.
+   * If 'default' is set as the last key in the array, its value serves as a fallback if no
+   * matches are found.
+   *
+   * @param array $conditions Array of key/value pairs where the keys are matched against the original
+   *                          field's value and the keys value would be returned on a match.
+   *                          Keys can be strings or integers but will be compared as strings.
+   *                          Values can be strings or Field objects.
+   *                          If 'default' is the last key, it acts as fallback for unmatched values.
+   * @param mixed $when An optional condition that determines whether to use the match function the
+   *                    field; defaults to `true`. If the condition is not met, the original field value
+   *                    is returned unchanged.
+   *
+   * @return Field Returns a new field with either:
+   *               - the matched condition's value
+   *               - the default value (if provided as last key and no match found)
+   *               - the original field value (if no match and no default)
+   */
+  public static function match(Field $field, array $conditions, mixed $when = true): Field
+  {
+    if (!self::isValidCondition($when)) {
+      return $field;
+    }
+
+    $value = $field->value();
+    $keys = array_keys($conditions);
+    $lastKey = end($keys);
+
+    foreach ($conditions as $condition => $result) {
+      // Only treat 'default' specially if it's the last key
+      if ($condition === $lastKey && $condition === 'default') {
+        continue;
+      }
+
+      if ((string)$condition === $value) {
+        return $field->value(
+          $result instanceof Field ? $result->value() : $result
+        );
+      }
+    }
+
+    // If no match was found and last key is 'default', use that
+    if ($lastKey === 'default') {
+      return $field->value(
+        $conditions['default'] instanceof Field ? $conditions['default']->value() : $conditions['default']
+      );
+    }
+
+    return $field;
+  }
+
+  /**
    * Wraps the field's value with specified strings or field values. If the field is empty, no wrapping strings will be added.
    *
    * @param Field|string $before The string or field to prepend to the field's value
@@ -243,7 +300,13 @@ class FieldMethods
    *
    * @return Field The modified field with wrapped value, or the original field if it's empty
    */
-  public static function wrap(Field $field, Field|string $before, Field|string|null $after = null, ?string $separator = null, mixed $when = true): Field
+  public static function wrap(
+    Field $field,
+    Field|string $before,
+    Field|string|null $after = null,
+    ?string $separator = null,
+    mixed $when = true
+  ): Field
   {
     if ($field->isEmpty() || !self::isValidCondition($when)) return $field;
 
@@ -261,9 +324,9 @@ class FieldMethods
    * @param array $attr An associative array of HTML attributes for the tag
    * @param string|null $indent The indentation string, or null for no indentation
    * @param int $level The indentation level
-   * @param mixed $when A condition that determines whether to wrap the field in a tag; defaults to `true`
    * @param bool $encode If `true` (default), encodes HTML characters in content. Set to `false` for
    *                     outer tags in nested `tag()` calls to preserve inner HTML structure.
+   * @param mixed $when A condition that determines whether to wrap the field in a tag; defaults to `true`
    *
    * @return Field The modified field with its value wrapped in the specified HTML tag
    */
@@ -273,8 +336,8 @@ class FieldMethods
     array $attr = [],
     ?string $indent = null,
     int $level = 0,
-    mixed $when = true,
-    bool $encode = true
+    bool $encode = true,
+    mixed $when = true
   ): Field
   {
 
@@ -285,6 +348,109 @@ class FieldMethods
     return $field->value(
       Html::tag($tag, $content, $attr, $indent, $level)
     );
+  }
+
+  /**
+   * Converts a field's value into a formatted list. Works with any field type that can be
+   * interpreted as a list: structure fields, pages fields, files fields, users fields,
+   * blocks fields, or strings with a user defined separator.
+   *
+   * @param string|bool|null $split Pattern to split string value, `null` for auto-detect,
+   *                               `false` to force array handling (non-array fields will be treated as single item)
+   * @param string|null $join String to join list items; defaults to configured listJoinSeparator
+   * @param string|null|callable $conjunction Optional conjunction text or callback before last item;
+   *                                         defaults to configured listConjunction
+   * @param bool $serial Whether to use serial (Oxford) comma before conjunction; defaults to `false`
+   * @param Closure|null $each Optional callback to process each item before joining
+   * @param Closure|null $all Optional callback to process the entire list array right before formatting it to the list
+   * @param mixed $when A condition that determines whether to process the field; defaults to `true`
+   *
+   * @return Field The processed field
+   */
+  public static function list(
+      Field $field,
+      string|bool|null $split = null,
+      ?string $join = null,
+      ?string $conjunction = null,
+      bool $serial = false,
+      ?Closure $each = null,
+      ?Closure $all = null,
+      mixed $when = true
+  ): Field {
+      if ($field->isEmpty() || !self::isValidCondition($when)) {
+          return $field;
+      }
+
+      $join = $join ?? option('trych.field-composer.listJoinSeparator');
+      $conjunction = $conjunction ?? option('trych.field-composer.listConjunction');
+
+      $items = self::getFieldItems($field, $split, $each);
+
+      // Apply list callback if provided
+      if ($all) {
+          $items = $all($items);
+      }
+
+      $count = count($items);
+      if ($count <= 1) {
+          return $field->value($count ? $items[0] : '');
+      }
+
+      if (!$conjunction) {
+          return $field->value(implode($join, $items));
+      }
+
+      if(is_callable($conjunction)) {
+          $conjunction = $conjunction();
+      }
+
+      $conjunction = ' ' . trim($conjunction) . ' ';
+
+      if ($count === 2) {
+          return $field->value($items[0] . $conjunction . $items[1]);
+      }
+
+      $last = array_pop($items);
+      return $field->value(
+          implode($join, $items) .
+          ($serial ? $join : '') .
+          $conjunction .
+          $last
+      );
+  }
+
+  /**
+   * Counts the number of items in a field that represents a list.
+   * Works with any field type that can be interpreted as a list: structure fields,
+   * pages fields, files fields, users fields, blocks fields, or strings with a user
+   * defined separator.
+   *
+   * @param string|bool|null $split Pattern to split string value, `null` for auto-detect,
+   *                               `false` to force array handling (non-array fields will be treated as single item)
+   * @param Closure|null $each Optional callback to process each item before counting
+   * @param Closure|null $all Optional callback to process the entire list array
+   * @param mixed $when A condition that determines whether to process the field; defaults to `true`
+   *
+   * @return Field The processed field containing the count (`0` for empty fields)
+   */
+  public static function count(
+    Field $field,
+    string|bool|null $split = null,
+    ?Closure $each = null,
+    ?Closure $all = null,
+    mixed $when = true
+  ): Field {
+    if ($field->isEmpty() || !self::isValidCondition($when)) {
+      return $field->value(0);
+    }
+
+    $items = self::getFieldItems($field, $split, $each);
+
+    if ($all) {
+        $items = $all($items);
+    }
+
+    return $field->value(count($items));
   }
 
   /**
@@ -332,13 +498,16 @@ class FieldMethods
    *                    Use {{ val }} as placeholder for the value, or the string will be used as prefix
    * @param bool $echo Whether to echo the dump (true) or return it as the field's new value (false)
    * @param bool $dumpField If set to true will dump the field itself instead of its value
+   * @param mixed $when A condition that determines whether to dump the output; defaults to true
    *
    * @return Field The original field when echoing the dump, otherwise the modified
    *               field with the dump output as its value
    *
    */
-  public static function dump(Field $field, ?string $msg = null, bool $echo = true, bool $dumpField = false): Field
+  public static function dump(Field $field, ?string $msg = null, bool $echo = true, bool $dumpField = false, mixed $when = true): Field
   {
+    if (!self::isValidCondition($when)) return $field;
+
     $val = $field->value();
     $dumpVal = $dumpField ? $field : $val;
 
@@ -373,11 +542,14 @@ class FieldMethods
    *                         If the file already exists, the log entry will be appended to the file.
    * @param bool $logField If set to true will log the field itself in Kirby's dump() format
    *                       instead of the field's value
+   * @param mixed $when A condition that determines whether to log the output; defaults to true
    *
    * @return Field The original field, allowing for method chaining
    */
-  public static function log(Field $field, ?string $msg = null, string $filename = 'field_composer', bool $logField = false): Field
+  public static function log(Field $field, ?string $msg = null, string $filename = 'field_composer', bool $logField = false, mixed $when = true): Field
   {
+    if (!self::isValidCondition($when)) return $field;
+
     $val = $logField ? trim(print_r($field, true)) : $field->value();
     if ($msg !== null) {
       $val = preg_match('/{{[ ]*val[ ]*}}/', $msg) ? Str::template($msg, ['val' => $val]) : $msg . $val;
@@ -404,6 +576,105 @@ class FieldMethods
            $condition !== null &&
            $condition !== '' &&
            $condition !== [];
+  }
+
+  private static function getFieldItems(Field $field, string|bool|null $split = null, ?Closure $callback = null): array
+  {
+      $items = null;
+
+      if (is_string($split)) {
+          // String split parameter - explicit split
+          $items = Str::split($field->value(), $split);
+          if ($callback) {
+              $items = array_map($callback, $items);
+          }
+      }
+      else {
+          // Otherwise try array handling first
+          $type = self::arrayFieldType($field);
+          if ($type) {
+              $items = match ($type) {
+                  'pages' => $callback ? $field->toPages()->toArray($callback) : $field->toPages()->keys(),
+                  'files' => $callback ? $field->toFiles()->toArray($callback) : $field->toFiles()->keys(),
+                  'users' => $callback ? $field->toUsers()->toArray($callback) : $field->toUsers()->keys(),
+                  'blocks' => $field->toBlocks()->toArray($callback),
+                  'structure' => $field->toStructure()->toArray($callback),
+                  default => $field->toData('yaml')
+              };
+          }
+          // If no array type found and split is false, treat as single item
+          elseif ($split === false) {
+              $value = $callback ? $callback($field->value()) : $field->value();
+              $items = [$value];
+          }
+          // Otherwise fall back to default split
+          else {
+              $items = Str::split($field->value(), ',');
+              if ($callback) {
+                  $items = array_map($callback, $items);
+              }
+          }
+      }
+
+      // Convert any remaining sub-arrays to JSON
+      $items = array_map(function($item) {
+          return is_array($item) ? json_encode($item) : $item;
+      }, $items);
+
+      return array_values(array_filter($items, function ($item) {
+          if($item instanceof Field) {
+              return $item->toString() !== '';
+          }
+          if(is_bool($item)) {
+              return $item === true;
+          }
+          return $item !== '';
+      }));
+  }
+
+  private static function arrayFieldType(Field $field): string|null {
+      $value = trim($field->value());
+      $isYaml = Str::startsWith($value, '- ');
+      $isJson = preg_match('/^\[\s*{/', $value) === 1;
+
+      if (!$isYaml && !$isJson) {
+          return null;
+      }
+
+      $fieldDef = $field->parent()?->blueprint()?->field($field->key());
+
+      if ($fieldDef && in_array($fieldDef['type'], [
+          'pages',
+          'files',
+          'users',
+          'structure',
+          'blocks',
+          'layout'
+      ])) {
+        return $fieldDef['type'];
+      }
+
+
+      try {
+        if ($field->toPages()->count() > 0) return 'pages';
+        if ($field->toFiles()->count() > 0) return 'files';
+        if ($field->toUsers()->count() > 0) return 'users';
+        $data = Data::decode($value, 'yaml');
+        if (is_array($data) && A::isAssociative($data[0] ?? null)) {
+          return 'structure';
+        }
+      } catch (\Throwable $e) {
+        // no structure field, continue
+      }
+
+      $blocks = $field->toBlocks();
+      if ($blocks->count() > 0 && !empty($blocks->first()->type())) {
+        return 'blocks';
+      }
+
+      if ($field->toLayouts()->count() > 0) return 'layout';
+
+      return null;
   }
 
   private static function addAffix(Field $field, Field|string $affix, string $separator, bool $isPrefix): Field
