@@ -454,7 +454,7 @@ $page->slideshow()->list(
 $page->slideshow()->list(
   each: fn($img) => $img->extension() === 'jpg' ? $img->filename() : false;
 );
-// => photo1.jpg (720 × 640 px), photo3.jpg (1280 × 720 px)
+// => photo1.jpg, photo3.jpg
 
 // List structure field values
 $page->team()->list(each: fn($member) => $member->name());
