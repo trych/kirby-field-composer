@@ -1,6 +1,6 @@
 # Kirby Field Composer
 
-Kirby Field Composer is a plugin that simplifies complex field operations in Kirby. It provides methods for merging fields, applying conditional logic, and manipulating strings, handling field values intelligently to avoid unwanted formatting issues. This makes it easier to work with both simple and complex content structures.
+Kirby Field Composer is a plugin that simplifies complex field operations in Kirby. It provides methods for merging fields, applying conditional logic and manipulating strings, handling field values intelligently to avoid unwanted formatting issues. This makes it easier to work with both simple and complex content structures.
 
 ## Features
 
@@ -30,7 +30,7 @@ $page->publisher()->prefix('Publisher: ');
 
 **{Artist Name}, {Year of Birth}-{Year of Death}, {Birth Place}; {Title of the Artwork}, {Year of Creation}; {Material} ({Width} × {Height} cm); {Collection}; {Description}**
 
-At first this might seem straight forward, but it can quickly become complex when you get into the specifics: there are sub-groups separated by semi-colons, while the sub-group entries themselves are separated by commas, mostly. When data is missing, it should not leave an abandoned separator in place, if the width is not given, the height should not display either, if the title is empty, it should be replaced by *Untitled*, if the artist is still alive, there should be a `*` before their year of birth, and so on.
+At first this might seem straight forward, but it can quickly become complex when you get into the specifics: there are sub-groups separated by semi-colons, while the sub-group entries themselves are separated by commas, mostly. When data is missing, it should not leave an abandoned separator in place, if the width is not given, the height should not display either, if the title is empty, it should be replaced by *Untitled*, if the artist is still alive, there should be a `*` before their year of birth and so on.
 
 Usually this would require a lot of fiddling with conditional statements, implode commands etc.
 
@@ -288,7 +288,7 @@ $page->description()->tag('p', ['class' => 'description']);
 // => <p class="description">Faint shapes lost in mist.</p>
 ```
 
-When nesting multiple `tag()` calls like `$field->tag('em')->tag('p')`, the inner HTML tags will be encoded and shown as text rather than rendered as HTML. This happens because each `tag()` call encodes its content for security. To properly nest tags while maintaining security, you need to: encode user content with a regular `tag()` call (`encode: true`), and then for subsequent `tag()` calls set `encode: false` to preserve the HTML structure.
+When nesting multiple `tag()` calls like `$field->tag('em')->tag('p')`, the inner HTML tags will be encoded and shown as text rather than rendered as HTML. This happens because each `tag()` call encodes its content for security. To properly nest tags while maintaining security, you need to: encode user content with a regular `tag()` call (`encode: true`) and then for subsequent `tag()` calls set `encode: false` to preserve the HTML structure.
 
 ```php
 // 🚫 Incorrect output: inner <em> tags will be encoded and shown as text
@@ -398,7 +398,7 @@ Applies a custom formatting function to the field's value.
 
 This is very similar to [Kirby’s native $field->callback\(\) method](https://getkirby.com/docs/reference/templates/field-methods/callback), except that for convenience the field’s value is used as the first parameter of the callback function (with the field itself being the second one) and only a string needs to be returned, the re-wrapping into a field happens automatically. Returning the field with the new value directly will also work, though.
 
-- **`$callback`:** A closure that takes the field's value and the field object as arguments, and returns the new formatted value. The value will be automatically wrapped in a field again.
+- **`$callback`:** A closure that takes the field's value and the field object as arguments and returns the new formatted value. The value will be automatically wrapped in a field again.
 
 ```php
 // remove all vowels from a string
@@ -410,7 +410,7 @@ $page->description()->format(function($value) {
 
 ### `$field->list($split, $join, $conjunction, $serial, $each, $all, $when)`
 
-Converts a field's value into a formatted list with advanced processing options. This method can handle any field type that represents a list: strings (with custom separators), structure fields, pages fields, files fields, users fields, or blocks fields. The method provides options to format the output with custom separators and conjunctions, process individual items, and transform the entire list.
+Converts a field's value into a formatted list with advanced processing options. This method can handle any field type that represents a list: strings (with custom separators), structure fields, pages fields, files fields, users fields or blocks fields. The method provides options to format the output with custom separators and conjunctions, process individual items and transform the entire list.
 
 - **`$split`:** Pattern to split string value, `null` for auto-detect, `false` to force array handling (non-array fields will be treated as single item)
 - **`$join`:** String to join list items. Defaults to `, ` or the user-defined `listJoinSeparator` option
@@ -442,7 +442,7 @@ $page->keywords()->list(',', null, 'and', true);
 // => red, blue, and green
 ```
 
-The method automatically handles Kirby's list-type fields like pages, files, users, blocks, and structure fields. Using the `$each` callback, you can process each item before it gets added to the list. The items are the individual collection items of the given field type. That means a pages field will be converted to page objects, so all page methods can be used in the item callback and accordingly for other collection types.
+The method automatically handles Kirby's list-type fields like pages, files, users, blocks and structure fields. Using the `$each` callback, you can process each item before it gets added to the list. The items are the individual collection items of the given field type. That means a pages field will be converted to page objects, so all page methods can be used in the item callback and accordingly for other collection types.
 ```php
 // Splitting a files field and listing the file names by using a callback
 $page->slideshow()->list(
@@ -474,24 +474,25 @@ $page->tags()->list(
 );
 // => art, culture, design, photography
 
-// Outputting all types of a bocks field with unique, sorted values
+// Outputting all types used in a blocks field with unique, sorted values
 $page->article()->list(
   each: fn($item) => $item->type(),
-  all: fn($items) => sort(array_unique($items))
+  all: fn($types) => sort(array_unique($types))
 );
 // => gallery, image, quote, text
 ```
 
 ### `$field->count($split, $each, $when)`
 
-Counts the number of items in a field that represents a list. Works with any field type that can be interpreted as a list: structure fields, pages fields, files fields, users fields, blocks fields, or strings with a user defined separator. If an `$each` callback is provided, strings or booleans can be returned. Empty strings or `false` values are not counted in this case.
+Counts the number of items in a field that represents a list. Works with any field type that can be interpreted as a list: structure fields, pages fields, files fields, users fields, blocks fields or strings with a user defined separator. If an `$each` callback is provided, strings or booleans can be returned. Empty strings or `false` values are not counted in this case. The `$all` callback allows you to transform the entire list before it will result in a count. This is useful for further filtering, removing duplicates etc.
 
 - **`$split`:** Pattern to split string value, `null` for auto-detect, `false` to force array handling (non-array fields will be treated as single item)
 - **`$each`:** Optional callback to process each item before counting. Can return transformed values or booleans
+- **`$all`:** Optional callback to process the entire list array right before converting it to the final count
 - **`$when`:** Optional condition that determines whether to process the field. Default is `true`
 
 ```php
-// Count items in a simple comma-separated list
+// Count items in a simple comma-separated field
 $page->keywords()->count();
 // => 3
 
@@ -503,6 +504,13 @@ $page->addresses()->count(null, fn($address) => $address->zip() );
 // Count images wider than 1000px in a slideshow field
 $page->slideshow()->count(null, fn($file) => $file->width() > 1000 );
 // => 5 (number of images wider than 1000px)
+
+// Count unique types used in a blocks field
+$page->article()->list(
+  each: fn($item) => $item->type(),
+  all: fn($types) => array_unique($types)
+);
+// => 4 (number of unique types)
 ```
 
 ### `$field->str($method, ...$args)`
