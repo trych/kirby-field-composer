@@ -434,7 +434,7 @@ Converts a field's value into a formatted list with advanced processing options.
 
 - **`$split`:** Pattern to split string value, `null` for auto-detect, `false` to force array handling (non-array fields will be treated as single item)
 - **`$join`:** String to join list items. Defaults to `, ` or the user-defined `listJoinSeparator` option
-- **`$conjunction`:** Optional conjunction text or callback before last item. Defaults to the no conjunction or the user-configured `listConjunction` option
+- **`$conjunction`:** Optional conjunction text or callback before last item. Defaults to no conjunction or the user-configured `listConjunction` option
 - **`$serial`:** Whether to use serial (Oxford) comma before conjunction. Defaults to `false`
 - **`$each`:** Optional callback to process each item
 - **`$all`:** Optional callback to process the entire list array right before formatting it to a list
