@@ -13,6 +13,26 @@ Kirby Field Composer is a plugin that simplifies complex field operations in Kir
 - 🔡 **String Manipulation**: Apply Kirby's `Str` class methods directly to fields.
 - 🔍 **Debugging Tools**: Methods for logging and debugging complex field method chains.
 
+## Table of Contents
+
+<!--ts-->
+   * [Overview](#overview)
+   * [Installation](#installation)
+   * [Field Methods](#field-methods)
+      * [merge()](#field-mergeargs)
+      * [prefix(), suffix()](#field-prefixprefix-separator-when)
+      * [wrap(), tag()](#field-wrapbefore-after-separator-when)
+      * [when(), whenAny(), notWhen(), notWhenAny(), whenAll(), whenNone()](#field-whenconditions)
+      * [match()](#field-matchconditions-when)
+      * [format()](#field-formatcallback)
+      * [list(), count()](#field-listsplit-join-conjunction-serial-each-all-when)
+      * [str()](#field-strmethod-args)
+      * [dump(), log()](#field-dumpmsg-echo-dumpfield)
+   * [Helpers](#helpers)
+      * [field(), f()](#fieldargs)
+   * [Options](#options)
+<!--te-->
+
 ## Overview
 Simple use cases include merging multiple fields to a single field’s value …
 ```php
@@ -115,7 +135,7 @@ Info:
 Museum: Tate
 ```
 
-# Field Methods
+## Field Methods
 
 Each of the plugin's field methods returns a field, so the methods can all be used to chain multiple field methods.
 
