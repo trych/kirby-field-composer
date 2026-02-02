@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.3] - 2026-02-02
+
+### Fixed
+- Fixed `format()` and `str()` methods to handle null values gracefully by normalizing them to empty strings
+
 ## [2.0.0] - 2025-01-05
 
 ### Added

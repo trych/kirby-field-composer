@@ -103,7 +103,8 @@ class FieldMethods
   {
     if (!self::isValidCondition($when)) return $field;
 
-    return $field->value($callback($field->value(), $field));
+    $value = $field->value() ?? '';
+    return $field->value($callback($value, $field));
   }
 
   /**
@@ -481,7 +482,8 @@ class FieldMethods
       throw new InvalidArgumentException("Method '$method' does not exist in Str class.");
     }
 
-    $result = Str::$method($field->value(), ...$args);
+    $value = $field->value() ?? '';
+    $result = Str::$method($value, ...$args);
 
     $field->value = $result;
     return $field;
