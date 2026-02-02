@@ -46,7 +46,13 @@ class FieldComposer
         },
         $fields
       ),
-      fn($value) => $value !== null && $value !== '' && $value !== []
+      function($value) {
+        // Handle Field objects returned from recursive compose() calls
+        if ($value instanceof Field) {
+          return $value->isNotEmpty();
+        }
+        return $value !== null && $value !== '' && $value !== [];
+      }
     ));
 
     return new Field(null, '', implode($separator, $fieldValues));

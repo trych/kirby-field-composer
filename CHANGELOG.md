@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.4] - 2026-02-02
+
+### Fixed
+- Fixed `field()` helper with nested arrays containing only empty fields - previously would output the separator, now correctly returns an empty string
+
 ## [2.0.3] - 2026-02-02
 
 ### Fixed
